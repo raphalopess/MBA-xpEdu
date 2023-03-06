@@ -1,0 +1,149 @@
+#################################################################################
+####                      Mineração de Dados - IGTI                          ####
+####                              Desafio                                    ####
+####                                                                         ####
+#################################################################################
+
+rm(list=ls(all=TRUE)) #Remove objetos da memória do R
+
+
+#################### Instala as bibliotecas necessarias ##############################################3
+
+# A instalacao da biblioteca é realizada apenas uma vez, caso já tenha sido realizada anteriormente, basta desconsiderar essa parte do código
+
+# A biblioteca caret possui uma quantidade enorme de ferramentas e algoritmos para aprendizado de maquina
+install.packages("caret", dependencies = TRUE,
+                 repos = "http://cran.us.r-project.org")
+
+# Biblioteca para trabalhar com o algoritmo rpart que gera a arvore de decisao
+install.packages("rpart", dependencies = TRUE,
+                 repos = "http://cran.us.r-project.org")
+
+# A biblioteca rpart.plot serve para gerar visualizacao da arvore de decisao construida
+install.packages("rpart.plot", dependencies = TRUE,
+                 repos = "http://cran.us.r-project.org")
+
+
+
+library(caret)
+library(rpart)
+library(rpart.plot)
+
+dados <- data.frame(Vendas = c(38, 46, 44, 44, 39, 35, 26, 41, 30, 
+           33, 26, 28, 31, 30, 31, 26, 23, 24, 34, 23, 28, 29, 20, 27, 29, 
+           23, 23, 25, 26, 18), 
+Preco_Cafe = c(3.73, 3.79, 3.81, 3.84, 3.89, 
+           4.09, 4.32, 4.35, 4.36, 4.4, 4.41, 4.42, 4.43, 4.46, 4.47, 4.49, 
+           4.56, 4.59, 4.61, 4.63, 4.66, 4.66, 4.67, 4.68, 4.71, 4.74, 4.75, 
+           4.75, 4.75, 4.77), 
+Preco_Concorrente = c(10.0047675456056, 10.08, 11.059814817243, 9.97907231759588, 9.25575934179982, 8.47426361616468, 
+          6.15178426976609, 9.89493052481661, 7.5357745574712, 8.91732639018558, 
+          4.99139143823058, 6.05147284311189, 8.02605186825303, 8.18445870002658, 
+          6.43720294701223, 5.62907828090766, 5.35430080577335, 5.23576225322135, 
+          6.33638008828379, 3.8, 4.58, 6.72769793490261, 3.771, 4.5, 5.28579245399679, 
+          3.98, 4.91596932205216, 4.82373523443324, 6.39204904235332, 3.9
+), Preco_Leite = c(4.07, 4.15, 4.34, 4.15, 4.75, 4.73, 4.53, 
+          4, 4.77, 4.34, 4.62, 4.37, 4.31, 4.21, 4, 4.25, 4.66, 4.73, 4.05, 
+          4.17, 4.19, 4.57, 4.81, 4.44, 4.29, 4.29, 4.36, 4.11, 4.21, 4.74
+), Preco_Cha = c(15.8600250388248, 22.5237965520507, 16.3180134555, 
+        17.5266927046774, 15.3471054897841, 11.2149596373952, 12.6837365341432, 
+        16.4833720967109, 11.6233870068171, 13.5159541055388, 11.3032101912457, 
+        11.1063350141269, 12.0742802553258, 13.273098180361, 13.8682387650611, 
+        11.4003858768072, 9.6903514137949, 12.1031613346239, 12.5291008841443, 
+        8.1797536138775, 12.0409190769433, 11.240855831779, 7.4218280761374, 
+        11.195808951093, 11.9859134292139, 8.8257350459575, 9.5607687450362, 
+        13.2786266462733, 11.1844365396152, 7.1969424925182), 
+Promocao = c(0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 0, 0, 0, 0, 1, 0, 1, 1, 
+0, 0, 0, 0, 0, 0, 1, 0))
+
+
+#Relacao entre as vendas e o preco do cafe
+plot(y = dados$Vendas,
+     x = dados$Preco_Cafe,
+     pch = 16)
+
+#Coeficiente de correlacao entre as vendas e o preco do cafe
+cor(dados$Vendas,dados$Preco_Cafe)
+
+#Relacao entre as vendas e o preco do concorrente
+plot(y = dados$Vendas,
+     x = dados$Preco_Concorrente,
+     pch = 16)
+
+#Coeficiente de correlacao entre as vendas e o preco do concorrente
+cor(dados$Vendas,dados$Preco_Concorrente)
+
+#Relacao das Vendas vs Promocao
+boxplot(dados$Vendas ~ dados$Promocao)
+
+
+#Relacao entre as vendas e o preco do leite
+plot(y = dados$Preco_Leite,
+     x = dados$Preco_Cafe,
+     pch = 16)
+
+#Coeficiente de correlacao entre as vendas e o preco do leite
+cor(dados$Preco_Leite,dados$Preco_Cafe)
+
+
+#Ajusta regressão linear entre as vendas (y), o preco do cafe (x1) e a promocao (x2)
+lm(Vendas ~ Preco_Cafe + Promocao, data = dados)
+
+
+# Cria a funcao que sera utilizada, identificando a variavel resposta e as preditoras
+# Neste caso a variável resposta é a Classe e as preditoras são Escolaridade, Idade, Renda_Mensal e Metodo de Pagamento
+funcao <- as.formula(Vendas ~
+                       Preco_Cafe +
+                       Preco_Concorrente+
+                       Preco_Leite +
+                       Preco_Cha +
+                       Promocao)
+
+
+
+
+
+# Arvore de decisao
+set.seed(1)
+
+arvore_model <- train(funcao, 
+                      data = dados,
+                      method = "rpart",
+                      control = rpart.control(
+                        minsplit = 5, #Qtde minima de observacoes em cada nó   
+                        minbucket = 5)) #Qtde minima de observacoes em cada no terminal
+
+
+#Visualiza arvore
+rpart.plot(arvore_model$finalModel,cex = 0.5)
+
+#Faz a predicao na base de teste
+predicao_arvore <- predict(arvore_model,newdata = dados)
+
+#Predicoes vs Vendas originais
+plot(y = predicao_arvore,
+     x = dados$Vendas,
+     pch = 16)
+
+MAE(predicao_arvore,dados$Vendas)
+
+
+# Random Forest
+set.seed(1)
+
+rf_model <- train(funcao,
+                  data = dados, 
+                  method = "rf",
+                  ntree = 100) #Utiliza 100 arvores de decisoes
+
+#Faz a predicao na base de teste
+predicao_rf <- predict(rf_model, newdata = dados)
+
+
+#Predicoes vs Vendas originais
+plot(y = predicao_rf,
+     x = dados$Vendas,
+     pch = 16)
+
+MAE(predicao_rf,dados$Vendas)
+
